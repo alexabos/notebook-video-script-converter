@@ -212,9 +212,8 @@ def generate_script(summaries):
     The script will be used to create a video lecture for a university course.
 
     Constraints:
-    - Target ~1500 words
-    - Do NOT exceed 3000 words
-    - Prefer clarity over completeness
+    - Target ~2000 words
+    - Do NOT exceed 5000 words
     - Audience: beginner Python students in Spanish
     - Style: spoken, natural, engaging
 
@@ -241,8 +240,7 @@ def generate_script(summaries):
 
     return call_llm(prompt)
 
-# Generate a section script
-def generate_section_script(section_text, context="", outline=""):
+def generate_section_script(section_text, context=""):
     prompt = f"""
     You are a university professor teaching Python.
 
@@ -250,9 +248,6 @@ def generate_section_script(section_text, context="", outline=""):
 
     ### Previous context (important):
     {context}
-
-    ### Lecture structure:
-    {outline}
 
     ### Section content:
     {section_text}
@@ -272,7 +267,7 @@ def generate_section_script(section_text, context="", outline=""):
     return call_llm(prompt)
 
 # Trim the script to the desired length
-def trim_to_length(text, max_words=3000):
+def trim_to_length(text, max_words=5000):
     words = text.split()
     if len(words) <= max_words:
         return text
@@ -291,29 +286,28 @@ def notebook_to_script(path):
     cells = extract_cells(nb)
     text = format_for_llm(cells)
     
-    sections = group_by_sections(cells)
+    chunks = chunk_text(text)
 
-    print(f"Sections: {len(sections)}")
+    print(f"Chunks: {len(chunks)}")
+    
     # 1. GLOBAL OUTLINE FIRST
     outline = build_outline(text)
 
-    # 2. SECTION-AWARE SUMMARIES
-    section_scripts = []
+    summaries = []
     context = ""
 
-    for s in sections:
-        section_text = format_section(s)
-        script = generate_section_script(section_text, context, outline)
-
-        section_scripts.append(script)
+    # 2. SECTION-AWARE SUMMARIES
+    for chunk in chunks:
+        summary = summarize_with_outline(chunk, outline, context)
+        summaries.append(summary)
 
         # compressed memory
         context = call_llm(
-            f"Summarize this teaching context briefly:\n\n{script}"
+            f"Summarize this teaching context briefly:\n\n{summary}"
         )
 
     # 3. FINAL LECTURE
-    script = generate_script(section_scripts)
+    script = generate_script(summaries)
     
     final_script = trim_to_length(script)
     
