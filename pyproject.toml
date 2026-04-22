@@ -1,0 +1,27 @@
+[project]
+name = "notebook-video-script-converter"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "openai",
+    "tiktoken",
+    "nbformat",
+    "dotenv"
+]
+
+[project.optional-dependencies]
+dev = [
+    "ipykernel"
+]
+
+[tool.uv]
+package = true
+
+[project.scripts]
+n2s = "notebook_video_script_converter.notebook_converter:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["notebook_video_script_converter*"]
